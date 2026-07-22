@@ -416,12 +416,15 @@ namespace ConsumablesOwnershipSynthesisPatcher
             var patchedItemsByCell = new Dictionary<string, List<(string Item, string Plugin, string OwnerLabel)>>(StringComparer.OrdinalIgnoreCase);
             var patchedItemTypeCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var cellDecisionInfo = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var cellPluginByLabel = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var (cellFormKey, candidates) in candidatesByCell)
             {
                 var cellLabelForReport = state.LinkCache.TryResolve<ICellGetter>(cellFormKey, out var reportCell)
                     ? (reportCell.EditorID ?? "Unknown cell")
                     : "Unknown cell";
+
+                cellPluginByLabel[cellLabelForReport] = cellFormKey.ModKey.FileName;
 
                 // A manual rule preempts the vote entirely: the configured owner wins outright,
                 // even in a cell with zero (or contradictory) existing ownership data.
@@ -443,7 +446,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
                     ownerRecord = manualOwner;
                     rankToApply = 0;
-                    cellDecisionInfo[cellLabelForReport] = "   decided by: manual rule";
+                    cellDecisionInfo[cellLabelForReport] = "decided by: manual rule";
                 }
                 else if (TryGetUsableCellOwner(reportCell, settings, state.LinkCache, ownerEdidCache, out var cellOwner, out var cellRank))
                 {
@@ -451,7 +454,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
                     // inferring one from a vote among the objects inside it.
                     ownerRecord = cellOwner;
                     rankToApply = cellRank;
-                    cellDecisionInfo[cellLabelForReport] = "   decided by: cell ownership";
+                    cellDecisionInfo[cellLabelForReport] = "decided by: cell ownership";
                 }
                 else
                 {
@@ -486,7 +489,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
                     // How many of the cell's owned eligible objects actually voted for the winning
                     // owner, out of how many owned objects (that counted as votes) were in the cell at all.
                     ownerCounts.TryGetValue(majorityOwnerFormKey, out var winningVotes);
-                    cellDecisionInfo[cellLabelForReport] = $"   decided by: {winningVotes}/{totalOwnedInCell} owned objects";
+                    cellDecisionInfo[cellLabelForReport] = $"decided by: {winningVotes}/{totalOwnedInCell} owned objects";
                 }
 
                 var ownerLabel = (ownerRecord as IMajorRecordGetter)?.EditorID
@@ -520,6 +523,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
                 patchedItemsByCell,
                 patchedItemTypeCounts,
                 cellDecisionInfo,
+                cellPluginByLabel,
                 excludedItemsByPlugin,
                 excludedCellsByRule,
                 excludedLocTypesByRule,
@@ -586,6 +590,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
             Dictionary<string, List<(string Item, string Plugin, string OwnerLabel)>> patchedItemsByCell,
             Dictionary<string, int> patchedItemTypeCounts,
             Dictionary<string, string> cellDecisionInfo,
+            Dictionary<string, string> cellPluginByLabel,
             Dictionary<string, List<string>> excludedItemsByPlugin,
             Dictionary<string, List<string>> excludedCellsByRule,
             Dictionary<string, List<string>> excludedLocTypesByRule,
@@ -611,8 +616,9 @@ namespace ConsumablesOwnershipSynthesisPatcher
                 var items = kvp.Value;
 
                 var voteLabel = cellDecisionInfo.TryGetValue(cellLabel, out var decision) ? decision : "";
+                var cellPlugin = cellPluginByLabel.TryGetValue(cellLabel, out var plugin) ? plugin : "Unknown plugin";
 
-                ConsoleWriteLine($"{cellLabel}   ({items.Count} patched){voteLabel}");
+                ConsoleWriteLine($"{cellLabel}   [{cellPlugin}]   ({items.Count} patched)   {voteLabel}");
 
                 var byOwner = items
                     .GroupBy(a => a.OwnerLabel)
@@ -713,8 +719,8 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
             PrintDivider();
             ConsoleWriteLine("Patching is complete! Scroll up to read the report.");
-        //    ConsoleWriteLine("\"No ownership data\" means the cell had zero already-owned ALCH objects to learn a pattern from.");
-        //    ConsoleWriteLine("\"Below threshold\" means the cell had SOME ownership data, but fewer owned objects than MinimumOwnedObjectsForMajority.");
+            //    ConsoleWriteLine("\"No ownership data\" means the cell had zero already-owned ALCH objects to learn a pattern from.");
+            //    ConsoleWriteLine("\"Below threshold\" means the cell had SOME ownership data, but fewer owned objects than MinimumOwnedObjectsForMajority.");
             PrintDivider();
         }
 
