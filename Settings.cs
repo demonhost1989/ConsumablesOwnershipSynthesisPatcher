@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System.ComponentModel;
 
 
@@ -72,8 +72,8 @@ namespace ConsumablesOwnershipProject
         [JsonProperty]
         public List<string> ExcludeCellRules { get; set; } =
         [
-            "BYOH", "Helgen", "GuardianStones", "RiftenThievesGuildHeadquarters", "DrelasCottage", "BlackBriarLodge", "Goldenglow", "ShrineofAzura",
-            "Cave", "HallOfTheDead",
+            "BYOH", "Helgen", "GuardianStones", "RiftenThievesGuildHeadquarters", "DrelasCottage", "BlackBriarLodge", "Goldenglow", 
+            "ShrineofAzura", "Cave", "HallOfTheDead",
         ];
 
         [DisplayName("Location Types to exclude")]

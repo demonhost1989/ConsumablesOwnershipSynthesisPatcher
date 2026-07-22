@@ -1,4 +1,4 @@
-﻿using ConsumablesOwnershipProject;
+using ConsumablesOwnershipProject;
 using Mutagen.Bethesda;
 using Mutagen.Bethesda.Plugins;
 using Mutagen.Bethesda.Plugins.Cache;
@@ -443,7 +443,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
                     ownerRecord = manualOwner;
                     rankToApply = 0;
-                    cellDecisionInfo[cellLabelForReport] = "   [manual ownership rule]";
+                    cellDecisionInfo[cellLabelForReport] = "   decided by: manual rule";
                 }
                 else if (TryGetUsableCellOwner(reportCell, settings, state.LinkCache, ownerEdidCache, out var cellOwner, out var cellRank))
                 {
@@ -451,7 +451,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
                     // inferring one from a vote among the objects inside it.
                     ownerRecord = cellOwner;
                     rankToApply = cellRank;
-                    cellDecisionInfo[cellLabelForReport] = "   [cell-level ownership]";
+                    cellDecisionInfo[cellLabelForReport] = "   decided by: cell ownership";
                 }
                 else
                 {
@@ -486,7 +486,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
                     // How many of the cell's owned eligible objects actually voted for the winning
                     // owner, out of how many owned objects (that counted as votes) were in the cell at all.
                     ownerCounts.TryGetValue(majorityOwnerFormKey, out var winningVotes);
-                    cellDecisionInfo[cellLabelForReport] = $"   [decided by {winningVotes}/{totalOwnedInCell} owned objects]";
+                    cellDecisionInfo[cellLabelForReport] = $"   decided by: {winningVotes}/{totalOwnedInCell} owned objects";
                 }
 
                 var ownerLabel = (ownerRecord as IMajorRecordGetter)?.EditorID
@@ -625,12 +625,22 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
                     var byItem = ownerGroup.Items
                         .GroupBy(a => a.Item)
-                        .Select(g => new { Item = g.Key, Count = g.Count() })
+                        .Select(g => new { Item = g.Key, Count = g.Count(), Entries = g.ToList() })
                         .OrderByDescending(a => a.Count);
 
                     foreach (var entry in byItem)
                     {
-                        ConsoleWriteLine($"          {entry.Count} {entry.Item}(s)");
+                        var pluginBreakdown = entry.Entries
+                            .GroupBy(a => a.Plugin)
+                            .Select(pg => new { Plugin = pg.Key, Count = pg.Count() })
+                            .OrderByDescending(pg => pg.Count)
+                            .ToList();
+
+                        var pluginLabel = pluginBreakdown.Count == 1
+                            ? pluginBreakdown[0].Plugin
+                            : string.Join(", ", pluginBreakdown.Select(pg => $"{pg.Plugin} ({pg.Count})"));
+
+                        ConsoleWriteLine($"          {entry.Count} {entry.Item}   [{pluginLabel}]");
                     }
                 }
 
@@ -670,7 +680,7 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
             foreach (var entry in combined.OrderByDescending(e => e.Count))
             {
-                ConsoleWriteLine($"The rule: {entry.Rule} ({entry.Type}) excluded {entry.Count} object(s)");
+                ConsoleWriteLine($"The rule: {entry.Rule} ({entry.Type}) excluded {entry.Count} ");
             }
 
             _lastWasDivider = false;
@@ -680,12 +690,12 @@ namespace ConsumablesOwnershipSynthesisPatcher
 
             var summaryLines = new List<(string Label, int Count, bool ShowItems)>
             {
-                ("Objects have been assigned owners", patchedCount, true),
-                ("Objects were already owned", alreadyOwnedCount, false),
-                ("Owned objects were excluded from voting by ExcludeOwnerNames", excludedOwnerVotesCount, false),
-                ("Objects were in a cell with no ownership data at all", noOwnershipDataCount, false),
-                ("Objects were in a cell below the minimum-owned threshold", belowThresholdCount, false),
-                ("Objects were excluded by rules", excludedCount, false),
+                ("Consumables have been assigned owners", patchedCount, true),
+                ("Consumables were already owned", alreadyOwnedCount, false),
+            //    ("Owned consumables were excluded from voting by ExcludeOwnerNames", excludedOwnerVotesCount, false),
+                ("Consumables were in a cell with no ownership data at all", noOwnershipDataCount, false),
+                ("Consumables were in a cell below the minimum-owned threshold", belowThresholdCount, false),
+                ("Consumables were excluded by rules", excludedCount, false),
             };
 
             foreach (var (label, count, showItems) in summaryLines.OrderByDescending(l => l.Count))
@@ -702,9 +712,9 @@ namespace ConsumablesOwnershipSynthesisPatcher
             }
 
             PrintDivider();
-            ConsoleWriteLine("Patching is complete! Scroll up to read a report on what was patched and why anything was skipped.");
-            ConsoleWriteLine("\"No ownership data\" means the cell had zero already-owned ALCH objects to learn a pattern from.");
-            ConsoleWriteLine("\"Below threshold\" means the cell had SOME ownership data, but fewer owned objects than MinimumOwnedObjectsForMajority.");
+            ConsoleWriteLine("Patching is complete! Scroll up to read the report.");
+        //    ConsoleWriteLine("\"No ownership data\" means the cell had zero already-owned ALCH objects to learn a pattern from.");
+        //    ConsoleWriteLine("\"Below threshold\" means the cell had SOME ownership data, but fewer owned objects than MinimumOwnedObjectsForMajority.");
             PrintDivider();
         }
 
