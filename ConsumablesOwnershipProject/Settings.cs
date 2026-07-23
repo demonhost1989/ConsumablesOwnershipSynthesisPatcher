@@ -64,7 +64,7 @@ namespace ConsumablesOwnershipProject
         [JsonProperty]
         public List<string> ExcludePlugins { get; set; } =
         [
-            "Vigilant", "SkyrimUnderground", "HearthFire", "Glenmoril", "GodsAndWorship", "GNW",
+            "Vigilant", "SkyrimUnderground", "HearthFire", "Glenmoril", "GodsAndWorship", "GNW", "Sewers", 
         ];
 
         [DisplayName("Cells to exclude")]
@@ -81,7 +81,7 @@ namespace ConsumablesOwnershipProject
         [JsonProperty]
         public List<string> ExcludeLocTypeRules { get; set; } =
         [
-            "Dungeon", "AnimalDen", "Bandit", "Dragonlair", "Draugr", "Dwarven",
+            "Dungeon", "AnimalDen", "Bandit", "Dragonlair", "Draugr", "Dwarven", "NordRuin",
             "Falmer", "GiantCamp", "Hagraven", "Spriggan", "Vampire", "Warlock",
             "Werewolf", "Forsworn", "Cave", "Ruin", "PlayerHouse", "Lair", "Fort",
         ];

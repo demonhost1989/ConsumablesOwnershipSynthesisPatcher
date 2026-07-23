@@ -301,9 +301,12 @@ namespace ConsumablesOwnershipSynthesisPatcher
                 if (!hasManualRule && !cellExcluded && settings.ExcludeLocTypeRules.Count > 0)
                 {
                     var location = containingCell.Location.TryResolve(state.LinkCache);
+                    var locPrefixes = new[] { "LocType", "LocSet" };
+
                     var keywordEdids = location?.Keywords?
                         .Select(k => k.TryResolve(state.LinkCache)?.EditorID)
-                        .Where(e => e != null && e.StartsWith("LocType", StringComparison.OrdinalIgnoreCase))
+                        .Where(e => e != null &&
+                                    locPrefixes.Any(p => e.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
                         .Select(e => e!)
                         .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
